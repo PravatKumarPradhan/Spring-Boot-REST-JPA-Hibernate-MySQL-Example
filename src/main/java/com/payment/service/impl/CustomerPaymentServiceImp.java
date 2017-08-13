@@ -16,7 +16,8 @@ import com.payment.service.CustomerPaymentService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.math.MathContext;
+import java.math.RoundingMode;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -75,39 +76,56 @@ public class CustomerPaymentServiceImp implements CustomerPaymentService {
             if (listOfCustomerPayment.size() != 0) {
                 //payment settlement logic here
                 for (PaymentReceivedBean cusBean : listOfCustomerPayment) {
+                    CustomerPayment customerPayment = new CustomerPayment();
+                    try {
+                        // save customerPayment payment Information
+                        //duplicate primary key
+                        customerPayment.setCustomerID(cusBean.getCustomerId());
+                        customerPayment.setCustomerPaymentDate(cusBean.getCustomerBillingDate());
+                        customerPayment.setCustomerPaymentAmount(cusBean.getPayAmount());
+                        userDao.create(customerPayment);
+                    } catch (Exception ex) {
+                        continue;
+
+                    }
+                    // get Customer information
                     Customer customer = userDao.getCustomerByCusID(cusBean.getCustomerId());
                     if (customer != null) {
                         CustomerBillingInformation cusBill = userDao.getCustomerBillingInformation(cusBean.getCustomerId(), cusBean.getCustomerBillingDate());
 
                         if (cusBill != null) {
+
                             // create 3 BigDecimal objects
-                            BigDecimal adjustAmount;
-                            MathContext mc = new MathContext(2); // 2 precision
-                            adjustAmount = cusBill.getCustomerTotalBilAmount().subtract(cusBean.getPayAmount(), mc);
-                            CustomerPayment customerPayment = new CustomerPayment();
-                            customerPayment.setCustomerID(cusBean.getCustomerId());
-                            customerPayment.setCustomerPaymentDate(cusBean.getCustomerBillingDate());
-                            customerPayment.setCustomerPaymentAmount(cusBean.getPayAmount());
+                            BigDecimal totalBilAmount, payAmount, adjustAmount,absAmount;
+                            totalBilAmount = new BigDecimal(cusBill.getCustomerTotalBilAmount().toString());
+                            payAmount = new BigDecimal(cusBean.getPayAmount().toString());
+
+                            System.out.println("getCustomerTotalBilAmount()::" + totalBilAmount);
+                            System.out.println("getPayAmount()::" + payAmount);
+                            // subtract 
+                            adjustAmount = payAmount.subtract(totalBilAmount);
+                            absAmount=adjustAmount.abs();
+                            System.out.println("adjustAmount::" + adjustAmount);
+                               System.out.println("absAmount::" + absAmount);
                             if (adjustAmount.signum() == 0) {
                                 customerPayment.setCustomerPaymentprocessingstatus('Y');
-                                userDao.create(customerPayment);
-                                totalpayment.add(customerPayment);
+                                System.out.println("setCustomerPaymentprocessingstatus()::" + customerPayment.getCustomerPaymentprocessingstatus());
 
                             } else if (adjustAmount.signum() > 0) {
                                 customerPayment.setCustomerPaymentprocessingstatus('Y');
-                                userDao.create(customerPayment);
-                                totalpayment.add(customerPayment);
+                                System.out.println("setCustomerPaymentprocessingstatus()::" + customerPayment.getCustomerPaymentprocessingstatus());
+
                             } else if (adjustAmount.signum() < 0) {
                                 customerPayment.setCustomerPaymentprocessingstatus('N');
-                                userDao.create(customerPayment);
-                                cusBill.setCustomerRemaingBalance(adjustAmount);
-                                userDao.update(cusBill);
-                                totalpayment.add(customerPayment);
-
+                                System.out.println("setCustomerPaymentprocessingstatus()::" + customerPayment.getCustomerPaymentprocessingstatus());
+                                cusBill.setCustomerRemaingBalance(absAmount);
+                                userDao.updateCusBill(cusBill);
                             }
 
                         }
                     }
+                    userDao.updateCustomerPayment(customerPayment);
+                    totalpayment.add(customerPayment);
 
                 }
 

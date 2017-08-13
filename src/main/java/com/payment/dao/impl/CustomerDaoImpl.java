@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.hibernate.Session;
+import org.hibernate.StatelessSession;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.context.annotation.Configuration;
 
@@ -61,20 +62,28 @@ public class CustomerDaoImpl implements CustomerDao {
 
     @Override
     public CustomerBillingInformation getCustomerBillingInformation(String customerId, Date customerBillingDate) {
+        Session session = sessionFactory.openSession();
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-mm-dd");
         String myDate = new SimpleDateFormat("yyyy-MM-dd").format(customerBillingDate);
         // gets the book entity back
         CustomerBillingInformationPK pk = new CustomerBillingInformationPK();
         pk.setCustomerId(customerId);
         pk.setCustomerBillingDate(customerBillingDate);
-        CustomerBillingInformation customerBillingInformation = (CustomerBillingInformation) sessionFactory.openSession().get(CustomerBillingInformation.class, pk);
+        CustomerBillingInformation customerBillingInformation = (CustomerBillingInformation) session.get(CustomerBillingInformation.class, pk);
+        session.flush();
+        session.close();;
         return customerBillingInformation;
 
     }
 
     @Override
-    public CustomerBillingInformation update(CustomerBillingInformation cusBillUpdate) {
-        sessionFactory.openSession().update(cusBillUpdate);
+    public CustomerBillingInformation updateCusBill(CustomerBillingInformation cusBillUpdate) {
+        Session session = sessionFactory.openSession();
+        session.beginTransaction();
+        session.saveOrUpdate(cusBillUpdate);
+        session.getTransaction().commit();
+        session.flush();
+        session.close();;
         return cusBillUpdate;
     }
 
@@ -87,6 +96,18 @@ public class CustomerDaoImpl implements CustomerDao {
         session.flush();
         session.close();;
 
+        return customerPayment;
+    }
+
+    @Override
+    public CustomerPayment updateCustomerPayment(CustomerPayment customerPayment) {
+
+        Session session = sessionFactory.openSession();
+        session.beginTransaction();
+        session.saveOrUpdate(customerPayment);
+        session.getTransaction().commit();
+        session.flush();
+        session.close();;
         return customerPayment;
     }
 

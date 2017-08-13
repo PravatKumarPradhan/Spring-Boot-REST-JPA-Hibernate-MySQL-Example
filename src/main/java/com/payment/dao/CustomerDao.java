@@ -20,10 +20,12 @@ public interface CustomerDao {
 
     CustomerBillingInformation getCustomerBillingInformation(String CustomerId, Date customerBillingDate);
 
-    CustomerBillingInformation update(CustomerBillingInformation cusBillUpdate);
+    CustomerBillingInformation updateCusBill(CustomerBillingInformation cusBillUpdate);
 
     List<CustomerPayment> getCustomerPayment();
 
     CustomerPayment create(CustomerPayment customerPayment);
+    
+    CustomerPayment updateCustomerPayment(CustomerPayment customerPayment);
 
 }
