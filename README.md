@@ -24,13 +24,19 @@ Content:From-Data
 
 
 Other Rest Api
+
 For Cutomer Info:
-http://localhost:8080/list
+
+API=http://localhost:8080/customer/list
+
 billing information
-URL=http://localhost:8080/billInfo
+
+API =http://localhost:8080/customer/bills
+
 Http Method:GET
 
 billing Pay information
 
-URL=http://localhost:8080/bilpmtInfo
+API=http://localhost:8080/customer/bill/payments
+
 Http Method:GET
